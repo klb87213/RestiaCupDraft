@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RESTIA CUP 瑞斯盃｜S 型選秀板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#3fe0c5; --accent-strong:#28c9ad; --line:#7fb9d8aa; --line-soft:#7fb9d855;
+    --text:#f2fbfd; --muted:#c4dcea;
+    --t1:#4fd1c5; --t2:#a99bff; --t3:#f88bc0;
+    --card-bg:#0e2e48e6; --pool-bg:#0a2338e0; --live:#ffd24a;
+    --font:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; padding:0; background:#06131d; height:100%; font-family:var(--font);}
+  body{ color:var(--text); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+
+  #stageWrap{ width:100vw; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  #stage{
+    width:1920px; height:1080px; position:relative; flex-shrink:0;
+    background:url('assets/bg.png') center/cover no-repeat, #0e2a42;
+    transform-origin:center center;
+  }
+  #stage::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,#06131d0f,#06131d22); pointer-events:none; z-index:1; }
+  .stage-inner{ position:absolute; inset:0; padding:24px 36px 30px; display:flex; flex-direction:column; z-index:2; }
+
+  /* ===== STEP 0 · INTRO ===== */
+  #introView{ position:absolute; inset:0; z-index:20; background:url('assets/intro.jpg') center/cover no-repeat, #0e2a42; }
+  #introView.hidden{ display:none; }
+  .start-btn{ position:absolute; left:50%; top:19.6%; transform:translateX(-50%);
+    min-width:200px; padding:9px 36px; font-size:25px; font-weight:900; letter-spacing:4px; font-family:var(--font);
+    color:#06202a; border:none; border-radius:14px; cursor:pointer;
+    background:linear-gradient(180deg,#eafff8,#3fe0c5 60%,#22c9ad);
+    box-shadow:0 6px 0 #0e8b78, 0 10px 26px #001a2a99, inset 0 2px 6px #ffffffcc;
+    transition:filter .12s, box-shadow .12s; }
+  .start-btn:hover{ filter:brightness(1.06); }
+  .start-btn:active{ transform:translateX(-50%) translateY(4px); box-shadow:0 2px 0 #0e8b78, 0 6px 16px #001a2a99, inset 0 2px 6px #ffffffcc; }
+
+  /* header */
+  .topbar{ display:flex; align-items:center; gap:20px; height:126px; flex-shrink:0; position:relative; }
+  .topbar img.logo{ filter:drop-shadow(0 4px 12px #0007); }
+  .topbar .restia-logo{ height:184px; margin:-12px 0; }
+  .topbar .delta-logo{ height:118px; }
+  .topbar .title{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); height:118px; width:auto;
+    filter:drop-shadow(0 0 6px #ffffffcc) drop-shadow(0 0 16px #7fd0ffaa) drop-shadow(0 0 30px #a9c8ff66); }
+  .topbar .right{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+  .topbar .dates{ display:flex; gap:10px; }
+  .topbar .pill{ background:#0b2740e0; border:1px solid var(--line); padding:8px 18px; border-radius:24px; font-size:15px; font-weight:500; }
+  .toolbtns{ display:flex; gap:9px; }
+  button{ background:linear-gradient(90deg,var(--accent),var(--accent-strong)); border:none; color:#052226; font-weight:700; padding:11px 20px; border-radius:9px; cursor:pointer; font-size:15px; font-family:var(--font); transition:filter .12s,transform .08s; }
+  button:hover{ filter:brightness(1.08); }
+  button:active{ transform:scale(.97); }
+  button.secondary{ background:#0b2740e0; color:var(--text); border:1px solid var(--line); }
+  button:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ===== STEP 0 · INTRO 名冊總覽 ===== */
+  #introView{ flex:1; display:flex; flex-direction:column; gap:14px; min-height:0; margin-top:10px; }
+  .intro-section{ display:flex; flex-direction:column; min-height:0; }
+  .intro-section.players{ flex:1; }
+  .sec-label{ align-self:center; background:linear-gradient(90deg,var(--accent),var(--accent-strong)); color:#052226; font-weight:900; font-size:22px; letter-spacing:6px; padding:5px 40px; border-radius:8px; margin-bottom:12px; box-shadow:0 3px 12px #0006; }
+  .intro-coaches{ display:grid; grid-template-columns:repeat(12,1fr); gap:10px; }
+  .ic{ display:flex; flex-direction:column; align-items:center; gap:6px; background:var(--card-bg); border:1px solid var(--line-soft); border-radius:12px; padding:9px 4px; }
+  .ic .ic-face{ width:82px; height:82px; border-radius:10px; object-fit:cover; border:2px solid var(--line); background:#ffffff22; }
+  .ic .ic-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:22px; color:#fff; }
+  .ic .ic-name{ font-size:15px; font-weight:700; text-align:center; line-height:1.1; }
+  .intro-tiers{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; min-height:0; }
+  .tier-panel{ background:#0a2338b0; border:1px solid var(--line-soft); border-radius:16px; padding:12px 14px 14px; display:flex; flex-direction:column; min-height:0; }
+  .tier-panel .tp-head{ align-self:flex-start; font-size:19px; font-weight:900; color:#052226; padding:3px 20px; border-radius:8px; margin-bottom:12px; }
+  .tier-panel .tp-head.T1{background:var(--t1);} .tier-panel .tp-head.T2{background:var(--t2);} .tier-panel .tp-head.T3{background:var(--t3);}
+  .tp-grid{ flex:1; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(3,1fr); gap:10px; min-height:0; }
+  .ip{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#ffffff10; border:1px solid var(--line-soft); border-radius:12px; padding:6px 4px; }
+  .ip .ip-face{ width:74px; height:74px; border-radius:10px; object-fit:cover; border:2px solid var(--line); background:#ffffff22; }
+  .ip .ip-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#fff; }
+  .ip .ip-name{ font-size:15px; font-weight:700; text-align:center; line-height:1.1; }
+
+  /* ===== RANK PHASE ===== */
+  .phase-banner{ display:flex; align-items:center; gap:18px; margin:20px 2px 18px; flex-shrink:0; align-self:flex-start; background:#06192ecc; padding:10px 22px; border-radius:14px; box-shadow:0 3px 12px #0006; }
+  .phase-banner .step-tag{ background:var(--accent); color:#052226; font-weight:900; font-size:24px; padding:9px 24px; border-radius:12px; }
+  .phase-banner .txt{ font-size:34px; font-weight:900; }
+  .phase-banner .hint{ font-size:19px; color:var(--muted); font-weight:500; }
+
+  #rankView{ flex:1; display:flex; flex-direction:column; min-height:0; }
+  .rank-grid{ flex:1; display:grid; grid-template-columns:repeat(6,1fr); grid-template-rows:repeat(2,1fr); gap:20px; min-height:0; align-content:center; }
+  .rank-card{ background:var(--card-bg); border:1px solid var(--line); border-radius:18px; padding:18px 14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; position:relative; cursor:grab; transition:transform .1s, box-shadow .12s, border-color .12s; }
+  .rank-card:hover{ border-color:var(--accent); transform:translateY(-3px); }
+  .rank-card.dragging{ opacity:.45; }
+  .rank-card.drop-target{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent) inset; }
+  .rank-card .rank-num{ position:absolute; top:12px; left:16px; font-size:40px; font-weight:900; color:var(--accent); text-shadow:0 2px 8px #001a2a; line-height:1; }
+  .rank-card .rank-face{ width:168px; height:168px; border-radius:50%; object-fit:cover; border:3px solid var(--line); background:#ffffff22; }
+  .rank-card .rank-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:48px; color:#fff; }
+  .rank-card .rank-name{ font-size:28px; font-weight:900; }
+
+  /* ===== DRAFT PHASE ===== */
+  #draftView{ flex:1; display:flex; gap:20px; min-height:0; margin-top:8px; }
+  .draft-left{ width:560px; flex-shrink:0; display:flex; flex-direction:column; gap:14px; min-height:0; }
+
+  .turn-card{ background:linear-gradient(135deg,#123b5aee,#0c2d47ee); border:2px solid var(--live); border-radius:18px; padding:16px 18px; display:flex; align-items:center; gap:16px; flex-shrink:0; box-shadow:0 0 26px #ffd24a33; }
+  .turn-card.done{ border-color:var(--accent); box-shadow:0 0 26px #3fe0c544; }
+  .turn-card .t-face{ width:118px; height:118px; border-radius:50%; object-fit:cover; border:3px solid var(--live); background:#ffffff22; flex-shrink:0; }
+  .turn-card .t-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:36px; color:#fff; }
+  .turn-card .t-info{ display:flex; flex-direction:column; gap:4px; }
+  .turn-card .t-line1{ font-size:18px; color:var(--live); font-weight:700; letter-spacing:1px; }
+  .turn-card .t-line2{ font-size:38px; font-weight:900; }
+  .turn-card .t-line3{ font-size:20px; font-weight:600; color:var(--muted); }
+  .turn-card .t-tier{ display:inline-block; padding:2px 15px; border-radius:20px; font-weight:900; color:#052226; font-size:20px; }
+  .turn-card .t-tier.T1{background:var(--t1);} .turn-card .t-tier.T2{background:var(--t2);} .turn-card .t-tier.T3{background:var(--t3);}
+
+  .active-pool{ background:var(--pool-bg); border:2px solid var(--accent); border-radius:16px; padding:14px; flex:1; display:flex; flex-direction:column; min-height:0; }
+  .active-pool h3{ margin:0 0 12px; font-size:21px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .active-pool .tier-pill{ font-size:17px; font-weight:900; padding:3px 15px; border-radius:20px; color:#052226; }
+  .active-pool .count{ margin-left:auto; font-size:16px; color:var(--muted); font-weight:500; }
+  .pool-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-content:flex-start; overflow:auto; flex:1; padding:3px; }
+  .pp-card{ display:flex; flex-direction:column; align-items:center; gap:8px; background:#ffffff12; border:1px solid var(--line-soft); border-radius:14px; padding:13px 6px 11px; cursor:pointer; user-select:none; transition:transform .1s, background .12s, border-color .12s; }
+  .pp-card:hover{ background:#3fe0c528; border-color:var(--accent); transform:translateY(-3px); }
+  .pp-card:active{ transform:scale(.96); }
+  .pp-card .pp-face{ width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--line); background:#ffffff22; }
+  .pp-card .pp-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:28px; color:#fff; }
+  .pp-card .pp-name{ font-size:18px; font-weight:700; text-align:center; line-height:1.15; }
+
+  /* round progress stepper */
+  .round-steps{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .rstep{ flex:1; text-align:center; padding:12px 6px; border-radius:12px; font-size:19px; font-weight:900; letter-spacing:1px;
+    background:#0a1f2e; border:1.5px solid var(--line-soft); color:#6f8ea0; transition:all .25s ease; }
+  .rstep .rs-state{ display:block; font-size:12px; font-weight:700; letter-spacing:0; margin-top:2px; opacity:.85; }
+  .rstep.done{ color:#eaf6f8; border-color:transparent; }
+  .rstep.done.T1{ background:#2b6b64; } .rstep.done.T2{ background:#54499e; } .rstep.done.T3{ background:#8f4f74; }
+  .rstep.active{ color:#052226; transform:translateY(-2px) scale(1.04); }
+  .rstep.active.T1{ background:var(--t1); box-shadow:0 0 20px #4fd1c5aa; }
+  .rstep.active.T2{ background:var(--t2); box-shadow:0 0 20px #a99bffaa; }
+  .rstep.active.T3{ background:var(--t3); box-shadow:0 0 20px #f88bc0aa; }
+  .rstep-arrow{ color:#8fb3c6; font-size:22px; font-weight:900; flex-shrink:0; }
+
+  /* board */
+  .board{ flex:1; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(3,1fr); gap:12px; min-height:0; }
+  .coach-card{ background:var(--card-bg); border:1px solid var(--line-soft); border-radius:14px; padding:9px 10px; display:flex; flex-direction:column; min-height:0; transition:border-color .12s, box-shadow .12s; }
+  .coach-card.active{ border-color:var(--live); box-shadow:0 0 18px #ffd24a55; }
+  .coach-head{ display:flex; align-items:center; gap:9px; margin-bottom:7px; flex-shrink:0; }
+  .coach-head .c-rank{ font-size:16px; font-weight:900; color:var(--accent); background:#0b2740; border-radius:8px; padding:2px 9px; }
+  .coach-head .c-face{ width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid var(--line); background:#ffffff22; }
+  .coach-head .c-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:16px; color:#fff; }
+  .coach-head .c-name{ font-size:19px; font-weight:700; }
+  .coach-head .c-picks{ margin-left:auto; font-size:13px; color:var(--muted); background:#ffffff16; padding:2px 10px; border-radius:12px; font-weight:600; }
+  .slots{ display:flex; flex-direction:column; gap:6px; flex:1; }
+  .slot{ display:flex; align-items:center; gap:10px; padding:5px 9px; border-radius:10px; border:1.5px dashed var(--line-soft); flex:1; min-height:58px; transition:background .12s,border-color .12s; }
+  .slot.live{ border-style:solid; border-color:var(--live); background:#ffd24a1a; }
+  .slot .tier-tag{ font-size:13px; font-weight:900; width:26px; text-align:center; color:var(--muted); flex-shrink:0; }
+  .slot .empty-hint{ color:var(--muted); font-size:14px; opacity:.7; }
+  .slot .s-face{ width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid var(--line); background:#ffffff22; flex-shrink:0; }
+  .slot .s-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; color:#fff; }
+  .slot .s-name{ font-size:18px; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .slot.filled{ border-style:solid; }
+  .slot.filled.T1{ border-color:var(--t1); background:#4fd1c518; }
+  .slot.filled.T2{ border-color:var(--t2); background:#a99bff18; }
+  .slot.filled.T3{ border-color:var(--t3); background:#f88bc018; }
+
+  /* round transition overlay */
+  #roundOverlay{ position:absolute; inset:0; z-index:8; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at center, #06192699, #061926f2); backdrop-filter:blur(3px); cursor:pointer; }
+  #roundOverlay.hidden{ display:none; }
+  .round-card{ text-align:center; padding:48px 80px; border-radius:26px;
+    background:linear-gradient(135deg,#123b5af2,#0c2d47f2); border:3px solid var(--live);
+    box-shadow:0 0 60px #ffd24a55, 0 20px 60px #0009; animation:roundPop .55s cubic-bezier(.2,.9,.3,1.25) both; }
+  .round-card .rc-tier{ display:inline-block; font-size:64px; font-weight:900; color:#052226; padding:6px 44px; border-radius:22px; margin-bottom:10px; letter-spacing:2px; }
+  .round-card .rc-tier.T1{ background:var(--t1);} .round-card .rc-tier.T2{ background:var(--t2);} .round-card .rc-tier.T3{ background:var(--t3);}
+  .round-card .rc-title{ font-size:58px; font-weight:900; color:#fff; text-shadow:0 4px 18px #000a; margin:6px 0 4px; }
+  .round-card .rc-sub{ font-size:30px; font-weight:700; color:var(--live); margin-top:12px; }
+  .round-card .rc-hint{ font-size:18px; color:var(--muted); font-weight:500; margin-top:20px; }
+  @keyframes roundPop{ 0%{ opacity:0; transform:scale(.7) translateY(20px);} 100%{ opacity:1; transform:none;} }
+  #roundOverlay.fade-out{ animation:ovFade .4s ease forwards; }
+  @keyframes ovFade{ to{ opacity:0; } }
+
+  /* animations */
+  @keyframes pickIn{ 0%{ opacity:0; transform:translateX(-14px) scale(.85);} 60%{ transform:translateX(0) scale(1.06);} 100%{ opacity:1; transform:none;} }
+  .slot.just-picked .s-face, .slot.just-picked .s-name{ animation:pickIn .5s cubic-bezier(.2,.8,.3,1.2) both; }
+  .slot.just-picked{ animation:flashLive .7s ease; }
+  @keyframes flashLive{ 0%{ box-shadow:0 0 0 0 var(--accent);} 40%{ box-shadow:0 0 22px 3px var(--accent);} 100%{ box-shadow:none;} }
+  @keyframes turnIn{ from{ opacity:0; transform:translateY(-12px);} to{ opacity:1; transform:none;} }
+  .turn-card.anim{ animation:turnIn .4s ease both; }
+
+  /* ===== FINAL ROSTER (定格) ===== */
+  #rosterView{ position:absolute; inset:0; z-index:5; background:url('assets/bg.png') center/cover no-repeat, #0e2a42; display:flex; }
+  #rosterView::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,#06131d55,#06131d88); z-index:1; pointer-events:none; }
+  .roster-inner{ position:relative; z-index:2; width:100%; padding:24px 40px 30px; display:flex; flex-direction:column; }
+  .roster-head{ display:flex; align-items:center; gap:20px; height:100px; flex-shrink:0; }
+  .roster-head img.logo{ height:150px; margin:-8px 0; filter:drop-shadow(0 4px 12px #0007); }
+  .roster-head h1{ margin:0; font-size:40px; font-weight:900; letter-spacing:3px; text-shadow:0 3px 14px #001a2a; }
+  .roster-head .sub{ font-size:17px; color:var(--muted); font-weight:500; margin-top:5px; }
+  .roster-head .r-actions{ margin-left:auto; display:flex; gap:10px; }
+  .roster-grid{ flex:1; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(3,1fr); gap:14px; min-height:0; margin-top:12px; }
+  .r-card{ background:var(--card-bg); border:1px solid var(--line); border-radius:16px; padding:12px 14px; display:flex; flex-direction:column; opacity:0; animation:turnIn .5s ease both; }
+  .r-top{ display:flex; align-items:center; gap:11px; margin-bottom:9px; flex-shrink:0; }
+  .r-top .r-rank{ font-size:20px; font-weight:900; color:#052226; background:var(--accent); border-radius:9px; padding:2px 11px; }
+  .r-top .r-face{ width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--line); background:#ffffff22; }
+  .r-top .r-face.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; color:#fff; }
+  .r-top .r-name{ font-size:22px; font-weight:900; }
+  .r-picks{ display:flex; flex-direction:column; gap:8px; flex:1; }
+  .r-pick{ display:flex; align-items:center; gap:11px; background:#ffffff10; border-radius:10px; padding:5px 9px; flex:1; }
+  .r-pick .r-tier{ font-size:14px; font-weight:900; color:#052226; border-radius:8px; padding:2px 10px; flex-shrink:0; }
+  .r-pick .r-tier.T1{background:var(--t1);} .r-pick .r-tier.T2{background:var(--t2);} .r-pick .r-tier.T3{background:var(--t3);}
+  .r-pick .r-pface{ width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid var(--line); background:#ffffff22; flex-shrink:0; }
+  .r-pick .r-pface.fallback{ display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:#fff; }
+  .r-pick .r-pname{ font-size:18px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .r-pick .r-empty{ font-size:14px; color:var(--muted); opacity:.6; }
+
+  /* modal */
+  .modal-overlay{ position:fixed; inset:0; background:#00121ae0; display:flex; align-items:center; justify-content:center; z-index:100; }
+  .modal-overlay.hidden{ display:none; }
+  .modal{ background:#0e2a42; border:1px solid var(--line); border-radius:18px; padding:26px; width:min(720px,92vw); max-height:84vh; overflow:auto; }
+  .modal h2{ margin-top:0; font-size:23px; font-weight:900; }
+  .modal table{ width:100%; border-collapse:collapse; font-size:16px; }
+  .modal th,.modal td{ border-bottom:1px solid var(--line-soft); padding:9px 7px; text-align:left; }
+  .modal th{ color:var(--accent); }
+  .modal-actions{ display:flex; gap:9px; margin-top:18px; justify-content:flex-end; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="stageWrap">
+<div id="stage">
+
+  <!-- STEP 0 · INTRO 海報 -->
+  <div id="introView">
+    <button id="startBtn" class="start-btn">START!</button>
+  </div>
+
+  <div class="stage-inner">
+
+    <div class="topbar">
+      <img class="logo restia-logo" src="assets/logo.png" alt="RESTIA CUP 瑞斯盃">
+      <img class="title" src="assets/title.png" alt="選秀大會">
+      <div class="right">
+        <div class="toolbtns" id="toolbtns"></div>
+      </div>
+    </div>
+
+    <!-- RANK PHASE -->
+    <div id="rankView" class="hidden">
+      <div class="phase-banner">
+        <span class="step-tag">STEP 1</span>
+        <span class="txt">排定教練名次</span>
+        <span class="hint">請拖曳教練卡調整名次，完成後請按右上角開始選秀</span>
+      </div>
+      <div class="rank-grid" id="rankGrid"></div>
+    </div>
+
+    <!-- DRAFT PHASE -->
+    <div id="draftView" class="hidden">
+      <div class="draft-left">
+        <div class="turn-card" id="turnCard"></div>
+        <div class="active-pool" id="activePool"></div>
+        <div class="round-steps" id="roundSteps"></div>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+
+  </div>
+
+  <!-- ROUND TRANSITION OVERLAY -->
+  <div id="roundOverlay" class="hidden"><div class="round-card" id="roundCard"></div></div>
+
+  <!-- FINAL ROSTER (freeze-frame) -->
+  <div id="rosterView" class="hidden">
+    <div class="roster-inner">
+      <div class="roster-head">
+        <img class="logo" src="assets/logo.png" alt="RESTIA CUP 瑞斯盃">
+        <div>
+          <h1>選秀大會結果</h1>
+          <div class="sub">三角洲行動 ｜ 正賽日期：2026/08/12 ~ 2026/08/14</div>
+        </div>
+        <div class="r-actions">
+          <button class="secondary" id="rosterCopy">複製為文字</button>
+          <button id="rosterClose">返回選秀板</button>
+        </div>
+      </div>
+      <div class="roster-grid" id="rosterGrid"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="modal-overlay hidden" id="summaryModal">
+  <div class="modal">
+    <h2>選秀結果總覽</h2>
+    <table id="summaryTable">
+      <thead><tr><th>順位</th><th>教練</th><th>T1</th><th>T2</th><th>T3</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="modal-actions">
+      <button class="secondary" id="copyBtn">複製為文字</button>
+      <button id="closeSummaryBtn">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COACHES = ["3K","瘋狗衝鋒俠","起舒","作康","阿棋","凱寧","Rustyrain","猶斯","小雪","泰瑞","吉米","浩浩"];
+const TIERS = {
+  T1: ["日下氷","龜狗","國濤","補路","Ren","Xargon","Restia","Crazyface","肉肉薔時","KO","小鹽","簡到槍"],
+  T2: ["芳香腳","赤鬼","雪Koyuki","夢夢","朔Sakuro","黑野悠真","奶哥","宣宣","久田","何老師","阿法","鮭Slaf"],
+  T3: ["烟花蹦蹦蹦","小伊伊","稻乙緹","崎塔","喬希","実Hitomi","3QSweet","玥Itsuki","宵Yoruno","茶帽瑪緹","幻月","熙歌"]
+};
+const TIER_LIST = ["T1","T2","T3"];
+
+// pre-cropped head-and-shoulders squares (auto face-detected + framed)
+const F = "assets/faces/";
+const IMG = {
+  "3K":F+"00.jpg","瘋狗衝鋒俠":F+"01.jpg","起舒":F+"02.jpg","作康":F+"03.jpg","阿棋":F+"04.jpg",
+  "凱寧":F+"05.jpg","Rustyrain":F+"06.jpg","猶斯":F+"07.jpg","小雪":F+"08.jpg","泰瑞":F+"09.jpg",
+  "吉米":F+"10.jpg","浩浩":F+"11.jpg","日下氷":F+"12.jpg","龜狗":F+"13.jpg","國濤":F+"14.jpg",
+  "補路":F+"15.jpg","Ren":F+"16.jpg","Xargon":F+"17.jpg","Restia":F+"18.jpg","Crazyface":F+"19.jpg",
+  "肉肉薔時":F+"20.jpg","KO":F+"21.jpg","小鹽":F+"22.jpg","簡到槍":F+"23.jpg","芳香腳":F+"24.jpg",
+  "赤鬼":F+"25.jpg","雪Koyuki":F+"26.jpg","夢夢":F+"27.jpg","朔Sakuro":F+"28.jpg","黑野悠真":F+"29.jpg",
+  "奶哥":F+"30.jpg","宣宣":F+"31.jpg","久田":F+"32.jpg","何老師":F+"33.jpg","阿法":F+"34.jpg",
+  "鮭Slaf":F+"35.jpg","烟花蹦蹦蹦":F+"36.jpg","小伊伊":F+"37.jpg","稻乙緹":F+"38.jpg","崎塔":F+"39.jpg",
+  "喬希":F+"40.jpg","実Hitomi":F+"41.jpg","3QSweet":F+"42.jpg","玥Itsuki":F+"43.jpg","宵Yoruno":F+"44.jpg",
+  "茶帽瑪緹":F+"45.jpg","幻月":F+"46.jpg","熙歌":F+"47.jpg"
+};
+
+const STORAGE_KEY = "restiaCupDraftState_v6";
+
+// ---- state ----
+let phase = "intro";                // 'intro' | 'rank' | 'draft'
+let coachOrder = COACHES.slice();   // ranking order (index0 = rank1)
+let assignments = {};               // assignments[coach][tier]
+COACHES.forEach(c => assignments[c] = {T1:null,T2:null,T3:null});
+let pickHistory = [];               // [{coach,tier,player}]
+let lastPick = null;                // {coach,tier} → drives the pick-in animation
+
+// ---- image cache (preload once → no re-fetch, no jank) ----
+function colorFor(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%360; return `hsl(${h},58%,45%)`; }
+const loadState_ok = new Set(); // names whose img loaded fine
+Object.keys(IMG).forEach(name=>{
+  const im=new Image(); im.decoding="async";
+  im.onload=()=>loadState_ok.add(name);
+  im.src=IMG[name];
+});
+// build an <img> (or fallback div) for a name at given class + size
+function face(name, cls, sizePx){
+  const src=IMG[name];
+  if(!src) return fallbackFace(name,cls,sizePx);
+  const img=document.createElement("img"); img.className=cls; img.alt=name; img.decoding="async"; img.src=src;
+  img.draggable=false; // let the parent card handle the drag, not the image itself
+  img.onerror=()=>img.replaceWith(fallbackFace(name,cls,sizePx));
+  return img;
+}
+function fallbackFace(name,cls,sizePx){
+  const d=document.createElement("div"); d.className=cls+" fallback";
+  d.style.background=colorFor(name); d.textContent=name.slice(0,2);
+  if(sizePx){ d.style.width=sizePx+"px"; d.style.height=sizePx+"px"; }
+  return d;
+}
+
+// ---- persistence ----
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({phase,coachOrder,assignments,pickHistory})); }
+function load(){
+  try{
+    // 測試用：網址帶 ?reset 就清空進度、從 Step 0 重來
+    if(/[?&]reset\b/.test(location.search)){ localStorage.removeItem(STORAGE_KEY); phase="intro"; return; }
+    const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null"); if(!s) return;
+    if(Array.isArray(s.coachOrder) && s.coachOrder.length===COACHES.length && s.coachOrder.every(c=>COACHES.includes(c))) coachOrder=s.coachOrder;
+    if(s.assignments) COACHES.forEach(c=>{ if(s.assignments[c]) TIER_LIST.forEach(t=>{ const p=s.assignments[c][t]; if(p&&TIERS[t].includes(p)) assignments[c][t]=p; }); });
+    if(Array.isArray(s.pickHistory)) pickHistory=s.pickHistory.filter(h=>h&&COACHES.includes(h.coach)&&TIER_LIST.includes(h.tier));
+    if(s.phase==="draft"||s.phase==="rank"||s.phase==="intro") phase=s.phase;
+  }catch(e){ console.warn("load fail",e); }
+}
+
+// ---- snake sequence ----
+function sequence(){
+  const seq=[];
+  coachOrder.forEach(c=>seq.push({coach:c,tier:"T1"}));               // 1 → 12
+  coachOrder.slice().reverse().forEach(c=>seq.push({coach:c,tier:"T2"})); // 12 → 1
+  coachOrder.forEach(c=>seq.push({coach:c,tier:"T3"}));               // 1 → 12
+  return seq;
+}
+function currentPick(){ const seq=sequence(); return pickHistory.length<seq.length ? seq[pickHistory.length] : null; }
+function placedInTier(tier){ const s=new Set(); COACHES.forEach(c=>{ if(assignments[c][tier]) s.add(assignments[c][tier]); }); return s; }
+function rankOf(coach){ return coachOrder.indexOf(coach)+1; }
+
+// =================== STEP 0 · INTRO ===================
+function renderIntro(){
+  const coaches=document.getElementById("introCoaches"); coaches.innerHTML="";
+  COACHES.forEach(coach=>{
+    const c=document.createElement("div"); c.className="ic";
+    c.appendChild(face(coach,"ic-face",82));
+    const n=document.createElement("div"); n.className="ic-name"; n.textContent=coach; c.appendChild(n);
+    coaches.appendChild(c);
+  });
+  const tiers=document.getElementById("introTiers"); tiers.innerHTML="";
+  TIER_LIST.forEach(tier=>{
+    const panel=document.createElement("div"); panel.className="tier-panel";
+    const head=document.createElement("div"); head.className="tp-head "+tier; head.textContent=tier; panel.appendChild(head);
+    const grid=document.createElement("div"); grid.className="tp-grid";
+    TIERS[tier].forEach(player=>{
+      const p=document.createElement("div"); p.className="ip";
+      p.appendChild(face(player,"ip-face",74));
+      const n=document.createElement("div"); n.className="ip-name"; n.textContent=player; p.appendChild(n);
+      grid.appendChild(p);
+    });
+    panel.appendChild(grid); tiers.appendChild(panel);
+  });
+}
+function startRank(){ phase="rank"; save(); showPhase(); }
+
+// =================== RANK PHASE ===================
+function renderRank(){
+  const grid=document.getElementById("rankGrid"); grid.innerHTML="";
+  coachOrder.forEach((coach,idx)=>{
+    const card=document.createElement("div"); card.className="rank-card"; card.draggable=true; card.dataset.idx=idx;
+    const num=document.createElement("div"); num.className="rank-num"; num.textContent=(idx+1); card.appendChild(num);
+    card.appendChild(face(coach,"rank-face",138));
+    const nm=document.createElement("div"); nm.className="rank-name"; nm.textContent=coach; card.appendChild(nm);
+
+    card.addEventListener("dragstart",e=>{ e.dataTransfer.setData("text/plain",idx); card.classList.add("dragging"); });
+    card.addEventListener("dragend",()=>card.classList.remove("dragging"));
+    card.addEventListener("dragover",e=>{ e.preventDefault(); card.classList.add("drop-target"); });
+    card.addEventListener("dragleave",()=>card.classList.remove("drop-target"));
+    card.addEventListener("drop",e=>{ e.preventDefault(); card.classList.remove("drop-target"); const from=parseInt(e.dataTransfer.getData("text/plain"),10); if(!isNaN(from)) moveCoach(from,idx); });
+    grid.appendChild(card);
+  });
+}
+function moveCoach(from,to){
+  if(to<0||to>=coachOrder.length||from===to) return;
+  const [c]=coachOrder.splice(from,1); coachOrder.splice(to,0,c);
+  save(); renderRank();
+}
+
+// =================== DRAFT PHASE ===================
+let slotRef = {}; // slotRef[coach][tier] = element
+
+function buildBoard(){
+  const board=document.getElementById("board"); board.innerHTML=""; slotRef={};
+  coachOrder.forEach(coach=>{
+    slotRef[coach]={};
+    const card=document.createElement("div"); card.className="coach-card"; card.dataset.coach=coach;
+    const head=document.createElement("div"); head.className="coach-head";
+    const rk=document.createElement("span"); rk.className="c-rank"; rk.textContent="#"+rankOf(coach); head.appendChild(rk);
+    head.appendChild(face(coach,"c-face",52));
+    const nm=document.createElement("span"); nm.className="c-name"; nm.textContent=coach; head.appendChild(nm);
+    const pk=document.createElement("span"); pk.className="c-picks"; pk.dataset.role="picks"; head.appendChild(pk);
+    card.appendChild(head);
+    const slots=document.createElement("div"); slots.className="slots";
+    TIER_LIST.forEach(tier=>{
+      const slot=document.createElement("div"); slot.className="slot"; slot.dataset.tier=tier; slot.dataset.coach=coach;
+      // drop target (drag support)
+      slot.addEventListener("dragover",e=>{ const cp=currentPick(); if(cp&&cp.coach===coach&&cp.tier===tier){ e.preventDefault(); } });
+      slot.addEventListener("drop",e=>{ e.preventDefault(); const player=e.dataTransfer.getData("text/plain"); const cp=currentPick(); if(cp&&cp.coach===coach&&cp.tier===tier&&TIERS[tier].includes(player)&&!placedInTier(tier).has(player)) doPick(player); });
+      slotRef[coach][tier]=slot; slots.appendChild(slot);
+    });
+    card.appendChild(slots); board.appendChild(card);
+  });
+  refreshBoard();
+}
+// update only dynamic bits of the board
+function refreshBoard(){
+  const cp=currentPick();
+  coachOrder.forEach(coach=>{
+    const card=document.querySelector(`.coach-card[data-coach="${cssq(coach)}"]`);
+    const isActive = cp && cp.coach===coach;
+    card.classList.toggle("active", !!isActive);
+    let cnt=0;
+    TIER_LIST.forEach(tier=>{
+      const slot=slotRef[coach][tier]; const player=assignments[coach][tier];
+      const live = cp && cp.coach===coach && cp.tier===tier;
+      const justPicked = player && lastPick && lastPick.coach===coach && lastPick.tier===tier;
+      slot.className="slot"+(player?" filled "+tier:"")+(live?" live":"")+(justPicked?" just-picked":"");
+      slot.innerHTML="";
+      const tag=document.createElement("span"); tag.className="tier-tag"; tag.textContent=tier; slot.appendChild(tag);
+      if(player){
+        cnt++;
+        slot.appendChild(face(player,"s-face",50));
+        const n=document.createElement("span"); n.className="s-name"; n.textContent=player; slot.appendChild(n);
+      } else {
+        const h=document.createElement("span"); h.className="empty-hint"; h.textContent= live?"← 本輪由此教練挑選":"待選"; slot.appendChild(h);
+      }
+    });
+    card.querySelector('[data-role="picks"]').textContent=cnt+"/3";
+  });
+}
+
+function renderTurnCard(){
+  const tc=document.getElementById("turnCard"); tc.innerHTML=""; tc.classList.remove("done");
+  tc.classList.remove("anim"); void tc.offsetWidth; tc.classList.add("anim"); // restart slide-in
+  const cp=currentPick();
+  const seq=sequence();
+  if(!cp){
+    tc.classList.add("done");
+    const info=document.createElement("div"); info.className="t-info";
+    info.innerHTML='<div class="t-line1">DRAFT COMPLETE</div><div class="t-line2">選秀完成</div><div class="t-line3">按「結果總覽」查看完整名冊</div>';
+    tc.appendChild(info); return;
+  }
+  tc.appendChild(face(cp.coach,"t-face",118));
+  const info=document.createElement("div"); info.className="t-info";
+  const l1=document.createElement("div"); l1.className="t-line1"; l1.textContent=`第 ${pickHistory.length+1} / ${seq.length} 手 · 現在輪到`;
+  const l2=document.createElement("div"); l2.className="t-line2"; l2.textContent=`#${rankOf(cp.coach)} ${cp.coach}`;
+  const l3=document.createElement("div"); l3.className="t-line3";
+  const tier=document.createElement("span"); tier.className="t-tier "+cp.tier; tier.textContent=cp.tier;
+  l3.appendChild(document.createTextNode("挑選 ")); l3.appendChild(tier); l3.appendChild(document.createTextNode(" 選手"));
+  info.appendChild(l1); info.appendChild(l2); info.appendChild(l3); tc.appendChild(info);
+}
+
+function renderActivePool(){
+  const wrap=document.getElementById("activePool"); wrap.innerHTML="";
+  const cp=currentPick();
+  const tier = cp ? cp.tier : "T3";
+  const placed=placedInTier(tier);
+  const remaining=TIERS[tier].filter(p=>!placed.has(p));
+  const h3=document.createElement("h3");
+  const pill=document.createElement("span"); pill.className="tier-pill"; pill.style.background=`var(--${tier.toLowerCase()})`; pill.textContent=tier; h3.appendChild(pill);
+  h3.appendChild(document.createTextNode(cp?" 選手池（點擊選入）":" 選手池"));
+  const cnt=document.createElement("span"); cnt.className="count"; cnt.textContent=`剩 ${remaining.length}/${TIERS[tier].length}`; h3.appendChild(cnt);
+  wrap.appendChild(h3);
+  const grid=document.createElement("div"); grid.className="pool-grid";
+  remaining.forEach(player=>{
+    const card=document.createElement("div"); card.className="pp-card"; card.draggable=!!cp;
+    card.appendChild(face(player,"pp-face",100));
+    const n=document.createElement("div"); n.className="pp-name"; n.textContent=player; card.appendChild(n);
+    if(cp){
+      card.addEventListener("click",()=>doPick(player));
+      card.addEventListener("dragstart",e=>e.dataTransfer.setData("text/plain",player));
+    } else { card.style.cursor="default"; }
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+}
+
+function renderIdlePools(){
+  const wrap=document.getElementById("roundSteps"); wrap.innerHTML="";
+  const cp=currentPick(); const activeTier=cp?cp.tier:null;
+  TIER_LIST.forEach((tier,i)=>{
+    const done=placedInTier(tier).size===TIERS[tier].length;
+    const active=tier===activeTier;
+    const step=document.createElement("div");
+    step.className="rstep "+tier+(active?" active":(done?" done":""));
+    const state = active ? "進行中" : (done ? "已完成" : "尚未開始");
+    step.innerHTML=`${tier} 選秀<span class="rs-state">${state}</span>`;
+    wrap.appendChild(step);
+    if(i<TIER_LIST.length-1){ const a=document.createElement("span"); a.className="rstep-arrow"; a.textContent="▸"; wrap.appendChild(a); }
+  });
+}
+
+// prominent round-start banner
+let roundTimer=null;
+const ROUND_META = {
+  T1:{ round:"第一輪", note:"由第 1 名開始" },
+  T2:{ round:"第二輪", note:"蛇形反向 · 由最後一名開始" },
+  T3:{ round:"第三輪", note:"由第 1 名開始" }
+};
+function showRoundBanner(tier){
+  const cp=currentPick(); if(!cp) return;
+  const meta=ROUND_META[tier];
+  const card=document.getElementById("roundCard");
+  card.innerHTML=`<div class="rc-tier ${tier}">${tier}</div>
+    <div class="rc-title">${meta.round}選秀環節</div>
+    <div class="rc-sub">由 #${rankOf(cp.coach)} ${cp.coach} 開始</div>
+    <div class="rc-hint">${meta.note}　·　點擊任意處開始</div>`;
+  const ov=document.getElementById("roundOverlay");
+  ov.classList.remove("hidden","fade-out");
+  card.style.animation="none"; void card.offsetWidth; card.style.animation=""; // restart pop
+  clearTimeout(roundTimer);
+  roundTimer=setTimeout(hideRoundBanner, 3000);
+}
+function hideRoundBanner(){
+  const ov=document.getElementById("roundOverlay");
+  if(ov.classList.contains("hidden")) return;
+  ov.classList.add("fade-out");
+  clearTimeout(roundTimer);
+  setTimeout(()=>{ ov.classList.add("hidden"); ov.classList.remove("fade-out"); }, 380);
+}
+document.getElementById("roundOverlay").addEventListener("click", hideRoundBanner);
+
+function doPick(player){
+  const cp=currentPick(); if(!cp) return;
+  if(!TIERS[cp.tier].includes(player)) return;
+  if(placedInTier(cp.tier).has(player)) return;
+  assignments[cp.coach][cp.tier]=player;
+  pickHistory.push({coach:cp.coach,tier:cp.tier,player});
+  lastPick={coach:cp.coach,tier:cp.tier};
+  save();
+  // light updates only
+  renderTurnCard(); renderActivePool(); renderIdlePools(); refreshBoard(); renderToolbar();
+  const n=pickHistory.length;
+  if(n===12) setTimeout(()=>showRoundBanner("T2"), 500);       // entering round 2
+  else if(n===24) setTimeout(()=>showRoundBanner("T3"), 500);  // entering round 3
+  else if(!currentPick()) setTimeout(showRoster, 650);         // final pick → freeze-frame
+}
+function undoPick(){
+  const last=pickHistory.pop(); if(!last) return;
+  assignments[last.coach][last.tier]=null;
+  lastPick=null;
+  save(); renderTurnCard(); renderActivePool(); renderIdlePools(); refreshBoard(); renderToolbar();
+}
+
+// =================== phase switching ===================
+function renderToolbar(){
+  const bar=document.getElementById("toolbtns"); bar.innerHTML="";
+  if(phase==="intro"){ /* no toolbar during intro */ }
+  else if(phase==="rank"){
+    const start=document.createElement("button"); start.textContent="開始選秀 ▶"; start.onclick=startDraft; bar.appendChild(start);
+  } else {
+    const undo=document.createElement("button"); undo.className="secondary"; undo.textContent="← 上一步"; undo.onclick=undoPick; undo.disabled=pickHistory.length===0; undo.id="undoBtn"; bar.appendChild(undo);
+    const roster=document.createElement("button"); roster.textContent="結果總覽 ⛶"; roster.onclick=showRoster; bar.appendChild(roster);
+    const back=document.createElement("button"); back.className="secondary"; back.textContent="重新選秀"; back.onclick=backToRank; bar.appendChild(back);
+    const clr=document.createElement("button"); clr.className="secondary"; clr.textContent="清空選秀"; clr.onclick=clearDraft; bar.appendChild(clr);
+  }
+}
+function showPhase(){
+  document.getElementById("introView").classList.toggle("hidden", phase!=="intro");
+  document.getElementById("rankView").classList.toggle("hidden", phase!=="rank");
+  document.getElementById("draftView").classList.toggle("hidden", phase!=="draft");
+  renderToolbar();
+  if(phase==="rank"){ renderRank(); }
+  else if(phase==="draft"){ buildBoard(); renderTurnCard(); renderActivePool(); renderIdlePools(); }
+}
+function startFromIntro(){ phase="rank"; save(); showPhase(); }
+document.getElementById("startBtn").addEventListener("click", startFromIntro);
+function startDraft(){ phase="draft"; save(); showPhase(); setTimeout(()=>showRoundBanner("T1"), 200); }
+function backToRank(){
+  if(pickHistory.length>0 && !confirm("返回排名次會清空目前所有選秀結果，確定？")) return;
+  clearAssignments(); phase="rank"; save(); showPhase();
+}
+function resetRank(){
+  if(!confirm("重置為預設教練順序？")) return;
+  coachOrder=COACHES.slice(); save(); renderRank();
+}
+function clearAssignments(){ COACHES.forEach(c=>assignments[c]={T1:null,T2:null,T3:null}); pickHistory=[]; }
+function clearDraft(){
+  if(!confirm("清空所有選秀結果（保留名次）？")) return;
+  clearAssignments(); save(); renderTurnCard(); renderActivePool(); renderIdlePools(); refreshBoard(); renderToolbar();
+}
+
+// =================== summary ===================
+function openSummary(){
+  const tb=document.querySelector("#summaryTable tbody"); tb.innerHTML="";
+  coachOrder.forEach((coach,i)=>{
+    const tr=document.createElement("tr");
+    [i+1, coach, assignments[coach].T1||"—", assignments[coach].T2||"—", assignments[coach].T3||"—"].forEach(v=>{ const td=document.createElement("td"); td.textContent=v; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+  document.getElementById("summaryModal").classList.remove("hidden");
+}
+document.getElementById("closeSummaryBtn").onclick=()=>document.getElementById("summaryModal").classList.add("hidden");
+document.getElementById("copyBtn").onclick=()=>{
+  const lines=coachOrder.map((c,i)=>`#${i+1} ${c}：T1 ${assignments[c].T1||"—"}／T2 ${assignments[c].T2||"—"}／T3 ${assignments[c].T3||"—"}`);
+  navigator.clipboard.writeText(lines.join("\n")).then(()=>alert("已複製到剪貼簿")).catch(()=>alert("複製失敗，請手動選取"));
+};
+
+// =================== final roster (freeze-frame) ===================
+function renderRoster(){
+  const grid=document.getElementById("rosterGrid"); grid.innerHTML="";
+  coachOrder.forEach((coach,i)=>{
+    const card=document.createElement("div"); card.className="r-card"; card.style.animationDelay=(i*0.04)+"s";
+    const top=document.createElement("div"); top.className="r-top";
+    const rk=document.createElement("span"); rk.className="r-rank"; rk.textContent="#"+(i+1); top.appendChild(rk);
+    top.appendChild(face(coach,"r-face",60));
+    const nm=document.createElement("span"); nm.className="r-name"; nm.textContent=coach; top.appendChild(nm);
+    card.appendChild(top);
+    const picks=document.createElement("div"); picks.className="r-picks";
+    TIER_LIST.forEach(tier=>{
+      const player=assignments[coach][tier];
+      const row=document.createElement("div"); row.className="r-pick";
+      const tg=document.createElement("span"); tg.className="r-tier "+tier; tg.textContent=tier; row.appendChild(tg);
+      if(player){
+        row.appendChild(face(player,"r-pface",46));
+        const pn=document.createElement("span"); pn.className="r-pname"; pn.textContent=player; row.appendChild(pn);
+      } else {
+        const e=document.createElement("span"); e.className="r-empty"; e.textContent="未選"; row.appendChild(e);
+      }
+      picks.appendChild(row);
+    });
+    card.appendChild(picks); grid.appendChild(card);
+  });
+}
+function showRoster(){ renderRoster(); document.getElementById("rosterView").classList.remove("hidden"); }
+function hideRoster(){ document.getElementById("rosterView").classList.add("hidden"); }
+document.getElementById("rosterClose").onclick=hideRoster;
+document.getElementById("rosterCopy").onclick=()=>{
+  const lines=coachOrder.map((c,i)=>`#${i+1} ${c}：T1 ${assignments[c].T1||"—"}／T2 ${assignments[c].T2||"—"}／T3 ${assignments[c].T3||"—"}`);
+  navigator.clipboard.writeText(lines.join("\n")).then(()=>alert("已複製到剪貼簿")).catch(()=>alert("複製失敗，請手動選取"));
+};
+
+// util: escape coach name for querySelector
+function cssq(s){ return s.replace(/["\\]/g,"\\$&"); }
+
+// =================== scale ===================
+function fitStage(){
+  const stage=document.getElementById("stage");
+  stage.style.transform=`scale(${Math.min(window.innerWidth/1920, window.innerHeight/1080)})`;
+}
+window.addEventListener("resize",fitStage);
+
+// init
+load(); showPhase(); fitStage();
+</script>
+</body>
+</html>
