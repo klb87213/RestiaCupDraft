@@ -357,17 +357,11 @@ function fallbackFace(name,cls,sizePx){
 }
 
 // ---- persistence ----
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({phase,coachOrder,assignments,pickHistory})); }
+// 不保留任何紀錄：每次重新整理都從 Step 0 重來
+function save(){ /* no-op：刻意不儲存進度 */ }
 function load(){
-  try{
-    // 測試用：網址帶 ?reset 就清空進度、從 Step 0 重來
-    if(/[?&]reset\b/.test(location.search)){ localStorage.removeItem(STORAGE_KEY); phase="intro"; return; }
-    const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null"); if(!s) return;
-    if(Array.isArray(s.coachOrder) && s.coachOrder.length===COACHES.length && s.coachOrder.every(c=>COACHES.includes(c))) coachOrder=s.coachOrder;
-    if(s.assignments) COACHES.forEach(c=>{ if(s.assignments[c]) TIER_LIST.forEach(t=>{ const p=s.assignments[c][t]; if(p&&TIERS[t].includes(p)) assignments[c][t]=p; }); });
-    if(Array.isArray(s.pickHistory)) pickHistory=s.pickHistory.filter(h=>h&&COACHES.includes(h.coach)&&TIER_LIST.includes(h.tier));
-    if(s.phase==="draft"||s.phase==="rank"||s.phase==="intro") phase=s.phase;
-  }catch(e){ console.warn("load fail",e); }
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  phase="intro";
 }
 
 // ---- snake sequence ----
